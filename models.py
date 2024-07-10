@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from database import Base
 from datetime import datetime
+from general import tashkent_tz
+
 
 class AssignmentTable(Base):
     __tablename__ = "assignment"
@@ -11,4 +13,3 @@ class AssignmentTable(Base):
     is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
-    
