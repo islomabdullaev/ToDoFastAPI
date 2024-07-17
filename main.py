@@ -1,9 +1,7 @@
 import models
-from fastapi import FastAPI, Depends, HTTPException, Path, status, Response
+from fastapi import FastAPI
 from database import engine
-from sqlalchemy.orm import Session
-from general import get_session
-from schemas import AssignmentCreateSchema, AssignmentEditSchema, AssignmentPriorityEditSchema
+from routers import assignment, auth
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -11,82 +9,5 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="To Do Project")
 
-
-@app.get('/assignments', status_code=status.HTTP_200_OK)
-async def get_assignments(session: Session = Depends(get_session)):
-    assignments = session.query(models.AssignmentTable).all()
-    return assignments
-
-@app.post('/assignments', status_code=status.HTTP_201_CREATED)
-async def create_assignment(
-    data: AssignmentCreateSchema,
-    session: Session = Depends(get_session)):
-    assignment = models.AssignmentTable(
-        title=data.title,
-        description=data.description,
-        priority=data.priority,
-        created_at=data.created_at
-    )
-    session.add(assignment)
-    session.commit()
-    session.refresh(assignment)
-
-    return assignment
-
-
-@app.get('/assignments/{assignment_id}', status_code=status.HTTP_200_OK)
-async def get_assignment(
-        assignment_id: int = Path(gt=0),
-        session: Session = Depends(get_session)):
-    assignment = session.query(models.AssignmentTable).filter(
-        models.AssignmentTable.id == assignment_id).first()
-    if assignment is not None:
-        return assignment
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found !")
-
-
-@app.put('/assignments/{assignment_id}', status_code=status.HTTP_201_CREATED)
-async def update_assignment(
-    data: AssignmentEditSchema,
-    assignment_id: int = Path(gt=0),
-    session: Session = Depends(get_session)):
-    assignment = session.query(models.AssignmentTable).filter(
-        models.AssignmentTable.id == assignment_id).first()
-    if assignment is not None:
-        assignment.title = data.title
-        assignment.description = data.description
-        assignment.is_completed = data.is_completed
-        session.add(assignment)
-        session.commit()
-        session.refresh(assignment)
-        return assignment
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found !")
-
-
-@app.patch('/assignments/{assignment_id}', status_code=status.HTTP_201_CREATED)
-async def update_assignment(
-    data: AssignmentPriorityEditSchema,
-    assignment_id: int = Path(gt=0),
-    session: Session = Depends(get_session)):
-    assignment = session.query(models.AssignmentTable).filter(
-        models.AssignmentTable.id == assignment_id).first()
-    if assignment is not None:
-        assignment.priority = data.priority
-        session.add(assignment)
-        session.commit()
-        session.refresh(assignment)
-        return assignment
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found !")
-
-@app.delete('/assignments/{assignment_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_assignment(
-    assignment_id: int = Path(gt=0),
-    session: Session = Depends(get_session)
-    ):
-    assignment = session.query(models.AssignmentTable).filter(
-        models.AssignmentTable.id == assignment_id).first()
-    if assignment is not None:
-        session.delete(assignment)
-        session.commit()
-        return Response(content="Deleted!", status_code=status.HTTP_204_NO_CONTENT)
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found !")
+app.include_router(router=auth.router)
+app.include_router(router=assignment.router)
