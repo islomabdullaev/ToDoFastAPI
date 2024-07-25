@@ -2,7 +2,7 @@ import models
 from fastapi import APIRouter, Depends, HTTPException, Response
 
 from schemas import UserCreateSchema
-from utils import hash_password
+from utils import create_access_token, hash_password, bcrypt_context
 from general import get_session
 from sqlalchemy.orm import Session
 from starlette import status
@@ -10,20 +10,34 @@ from sqlalchemy.exc import IntegrityError
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from typing import Annotated
 
-SECRET_KEY = "631c915424288e2b5e505f5a363d3b62131a2176fbbfb1b81b3c269df2dea6d6"
-ALGORITHM = "HS256"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/signin")
-
 router = APIRouter(
     prefix="/auth",
     tags=["auth"])
 
 
+async def authenticate_user(username: str, password: str, session: Session):
+    user = session.query(models.UserTable).filter(models.UserTable.username == username).first()
+    if user is None:
+        return False
+    if not bcrypt_context.verify(password, user.password):
+        return False
+    else:
+        return user
+
+
 @router.post("/signin")
-async def signin(data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user = autnetuicated_user(data.username, password)
+async def signin(
+        data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        session: Session = Depends(get_session)):
+    user = await authenticate_user(username=data.username, password=data.password, session=session)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
+            "message": "User not found !"
+        })
+    token = create_access_token(username=user.username, user_id=user.id)
     return {
-        "user": "Authenticated !"
+        "token": token,
+        "type": "Bearer"
     }
 
 
