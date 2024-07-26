@@ -17,6 +17,7 @@ class UserTable(Base):
     is_active = Column(Boolean, default=True)
     role = Column(String(24))
     created_at = Column(DateTime, nullable=False, default=datetime.now(tz=tashkent_tz))
+    phone = Column(String(13))
     updated_at = Column(DateTime, onupdate=datetime.now(tz=tashkent_tz))
 
 class AssignmentTable(Base):

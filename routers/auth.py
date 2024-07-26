@@ -1,5 +1,5 @@
 import models
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException
 
 from schemas import UserCreateSchema
 from utils import create_access_token, hash_password, bcrypt_context
@@ -7,8 +7,7 @@ from general import get_session
 from sqlalchemy.orm import Session
 from starlette import status
 from sqlalchemy.exc import IntegrityError
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from typing import Annotated
+from schemas import UserLoginSchema
 
 router = APIRouter(
     prefix="/auth",
@@ -27,7 +26,7 @@ async def authenticate_user(username: str, password: str, session: Session):
 
 @router.post("/signin")
 async def signin(
-        data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        data: UserLoginSchema,
         session: Session = Depends(get_session)):
     user = await authenticate_user(username=data.username, password=data.password, session=session)
     if not user:
@@ -52,6 +51,7 @@ async def signup(
             last_name=data.last_name,
             username=data.username,
             email=data.email,
+            role=data.role,
             password=hashed_password
         )
         session.add(user)

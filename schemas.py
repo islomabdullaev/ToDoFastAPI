@@ -26,3 +26,17 @@ class UserCreateSchema(BaseModel):
     email: str
     password: str
     role: str
+
+
+class UserLoginSchema(BaseModel):
+    username: str
+    password: str
+
+
+class UserSchema(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    username: str
+    email: str
+    role: str
