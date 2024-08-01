@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status, Response
 from sqlalchemy.orm import Session
 from general import get_session
 from schemas import AssignmentCreateSchema, AssignmentEditSchema, AssignmentPriorityEditSchema, UserSchema
-from general import oauth2_scheme
 from utils import JWTBearer
+from sqlalchemy import select
 
 
 router = APIRouter(
@@ -16,12 +16,12 @@ router = APIRouter(
 async def get_assignments(
         user: UserSchema = Depends(JWTBearer()),
         session: Session = Depends(get_session)):
-    print(user.id)
-    if user.role != "developer":
+    if user.role != "pm":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={
             "message": "You are not permitted"
         })
-    assignments = session.query(models.AssignmentTable).all()
+    assignments = session.execute(select(models.AssignmentTable)).all()
+    print(assignments)
     return assignments
 
 @router.post('', status_code=status.HTTP_201_CREATED)

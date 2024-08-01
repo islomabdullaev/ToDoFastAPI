@@ -1,8 +1,8 @@
 import models
 from fastapi import APIRouter, Depends, HTTPException
 
-from schemas import UserCreateSchema
-from utils import create_access_token, hash_password, bcrypt_context
+from schemas import UserCreateSchema, UserSchema
+from utils import JWTBearer, create_access_token, hash_password, bcrypt_context
 from general import get_session
 from sqlalchemy.orm import Session
 from starlette import status
@@ -52,6 +52,7 @@ async def signup(
             username=data.username,
             email=data.email,
             role=data.role,
+            phone=data.phone,
             password=hashed_password
         )
         session.add(user)
@@ -66,3 +67,12 @@ async def signup(
     return {
         "message": "Created Successfully !"
     }
+
+@router.get("/me", status_code=status.HTTP_200_OK)
+async def me(
+    user: UserSchema = Depends(JWTBearer())) -> UserSchema:
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={
+            "message": "Unauthorized !"
+        })
+    return user

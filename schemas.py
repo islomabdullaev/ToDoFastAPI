@@ -26,6 +26,7 @@ class UserCreateSchema(BaseModel):
     email: str
     password: str
     role: str
+    phone: str | None = None
 
 
 class UserLoginSchema(BaseModel):
@@ -40,3 +41,4 @@ class UserSchema(BaseModel):
     username: str
     email: str
     role: str
+    phone: str | None = None
